@@ -49,7 +49,8 @@ The model I developed uses six characteristics:
 
 ## The Code
 
-```{R, eval = F}
+
+```r
 # Load Data
 minerals <- read.csv("mineral_data.csv")
 

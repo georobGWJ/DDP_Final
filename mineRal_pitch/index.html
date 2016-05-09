@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Classifying Minerals</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Classifying Minerals">
+  <meta name="author" content="Rob Turner">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  <link rel=stylesheet href="./assets/css/ribbons.css"></link>
+
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>Classifying Minerals</h1>
+    <h2>Using Machine Learning</h2>
+    <p>Rob Turner<br/>Geologist</p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h2>Introduction</h2>
+  </hgroup>
+  <article data-timings="">
+    <h4>A Mineral is a naturally occurring crystalline solid with a definite, but not necessarily fixed composition.</h4>
+
+<p><p>Over 3,500 minerals have been identified to date. Geologists typically learn to identify a few hundred of these using their natural, observable characteristics.</p>
+
+<p>However, identifying minerals by easily observable characteristics can be very difficult for people who are just learning how to do so.</p>
+
+<p>I have developed a proof of concept Shiny application that develops and uses a General Boosing Model to identify minerals based on a few of the most easily observable characteristics.</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Mineral Characteristics</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>The model I developed uses six characteristics:</p>
+
+<ol>
+<li>Hardness. The Mohs scale of mineral hardness is a qualitative scale that characterizes the scratch resistance of minerals through the ability of a harder material to scratch a softer material. <a href="https://en.wikipedia.org/wiki/Mohs_scale_of_mineral_hardness">https://en.wikipedia.org/wiki/Mohs_scale_of_mineral_hardness</a></li>
+<li>Specific Gravity. A measure of density of a material (actually a ratio of densities.) <a href="https://en.wikipedia.org/wiki/Specific_gravity">https://en.wikipedia.org/wiki/Specific_gravity</a></li>
+<li>Color. The color of the mineral. Some minerals are always a specific color but many have ranges.</li>
+<li>Streak Color. When a mineral is rubbed on porcelain, the powder color may be different from the mineral color.</li>
+<li>Reaction with Hydrochloric acid (HCl). Some minerals contain carbonate (CO2 or CO3). These will &#39;fizz&#39; when HCl is applied to them. </li>
+<li>Luster. Is the mineral metallic. There are other lusters that exist that weren&#39;t accounted for in this simple model.</li>
+</ol>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-3" style="background:;">
+  <hgroup>
+    <h2>Model Creation</h2>
+  </hgroup>
+  <article data-timings="">
+    <ol>
+<li><p>I first generated a simple data set as a data frame with the characteristics of 55 common minerals included as variables.</p></li>
+<li><p>I then used the dataset to generate a Generalized Boosting Model (gbm)  prediction model. GBM is a gradient boosting machine learning technique that can be used for classification problems, and which produces a prediction model in the form of a suite of weak prediction models (typically decision trees). The model is built in a stage-wise fashion, similar to other boosting methods, and it is generalized by allowing optimization of an arbitrary differentiable loss function.</p></p></li>
+</ol>
+
+<p><p>More information and formulae can be found at:
+<p><a href="https://en.wikipedia.org/wiki/Gradient_boosting">https://en.wikipedia.org/wiki/Gradient_boosting</a> </p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-4" style="background:;">
+  <hgroup>
+    <h2>The Code</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r"># Load Data
+minerals &lt;- read.csv(&quot;mineral_data.csv&quot;)
+
+# Create prediction model
+    mfit &lt;- train(minerals$mineral ~ ., data = minerals, method = &quot;gbm&quot;)
+
+# Take the characteristics from the Shiny page and
+# predict the mineral
+sample &lt;- isolate(data.frame(spec.gravity = input$sg, 
+                         hardness = input$hardness, 
+                         color = as.factor(input$mcolor), 
+                         streak = as.factor(input$scolor), 
+                         hcl_rxn = as.factor(input$acid), 
+                         metallic = as.factor(input$metal)))
+
+mineral_pred &lt;- (predict(mfit, newdata=sample))
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-5" style="background:;">
+  <hgroup>
+    <h2>Lessons Learned</h2>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>This proof of concept Machine Learning method may not be the best for classifying minerals. It does not account for natural ranges (such as ranges of color or specific gravity.)</li>
+<li>A machine learning algorithm must be able to account for impossibilities. An example is that you can enter a mineral color of &#39;white&#39; and depending on your other entries the model may predict you are looking at tourmaline. Tourmaline is always black.</li>
+<li>Adding additional covariates to the model creation should improve it&#39;s performance.</li>
+</ul>
+
+<h3>Thank you!</h3>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='Introduction'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='Mineral Characteristics'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='Model Creation'>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='The Code'>
+         4
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=5 title='Lessons Learned'>
+         5
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>
